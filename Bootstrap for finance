@@ -1,0 +1,49 @@
+x = 1:100 //x between 1 and 100.
+x = rnorm(100) // creates 100 random values from a standard normal distribution
+n = length(x) // stores the sample size
+B <- 10000 // number of bootstrap resamples (with replacement by definition)
+resamples <- matrix(sample(x,
+                           n * B,
+                           replace = TRUE),
+                    B, n) // creates resamples
+medians <- apply(resamples, 1, median) //computes bootstrapped medians (medians generated after the random selection incl.replacement in B iterations)
+quantile(medians, c(.025, .975)) //95% confidence intervals for the medians, 95% of the medians will fall between the values returned
+means <- apply(resamples, 1, mean) //computes bootstrapped means (means generated after the random selection incl.replacement in B iterations)
+quantile(means, c(.025, .975))//95% confidence intervals for the means, 95% of the means will fall between the values returned
+
+
+// Drawing simple histograms
+hist(medians)
+hist(means)
+
+//Drawing more complex histogram
+
+library(ggplot2)
+g = ggplot(data.frame(medians = medians), aes(x = medians))
+g = g + geom_histogram(color = "black", fill = "lightblue", binwidth = 0.05)
+g
+
+//loading libraries that provide functions for bootstrapping
+
+library(boot)
+library(help=boot)
+
+// creating functions to create the median-mean of a dataset given some parameters
+
+medianfunc <- function(vX, idx){
+  median(vX[idx])
+}
+
+meanfunc <- function(vX, idx){
+  mean <- vX[idx]
+}
+
+//automatic resampling with the boot function and then finding the confidence interval
+
+b1 <- boot(x, medianfunc, R=B)
+b1.ci <- boot.ci(b1)
+
+
+b2 <- boot(x, meanfunc, R=B)
+b2.ci <- boot.ci(b2)
+
