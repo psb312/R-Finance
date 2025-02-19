@@ -1,0 +1,33 @@
+library(forecast)
+library(tseries)
+library(zoo)
+library(lubridate)
+
+# Step 1: Simulating a Time Series of Probability of Default (PD)
+set.seed(123)
+dates <- seq(as.Date("2010-01-01"), as.Date("2024-12-01"), by = "month")
+pd_rates <- ts(rnorm(length(dates), mean = 0.05, sd = 0.01), start = c(2010,1), frequency = 12)
+pd_rates <- pmax(pd_rates, 0.01)  # Ensuring no negative probabilities
+
+# Plot PD rates
+ts.plot(pd_rates, main = "Simulated Probability of Default (PD) Over Time", 
+        ylab = "PD Rate", col = "blue")
+
+# Step 2: Check Stationarity
+adf.test(pd_rates)
+
+# Apply differencing if not stationary
+diff_pd <- diff(pd_rates)
+ts.plot(diff_pd, main = "Differenced PD Rates", ylab = "Differenced PD Rate", col = "red")
+adf.test(diff_pd)  # Should be stationary now
+
+# Step 3: Fit ARIMA Model
+arima_model <- auto.arima(pd_rates, seasonal = FALSE)
+summary(arima_model)
+
+# Step 4: Forecast Future PD Rates
+forecast_pd <- forecast(arima_model, h = 12)
+plot(forecast_pd, main = "Forecasted Probability of Default (PD)", ylab = "PD Rate")
+
+# Step 5: Evaluate Model Performance
+accuracy(forecast_pd)
